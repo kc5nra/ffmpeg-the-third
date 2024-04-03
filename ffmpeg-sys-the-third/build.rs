@@ -186,6 +186,22 @@ fn switch(configure: &mut Command, feature: &str, name: &str) {
     configure.arg(arg.to_string() + name);
 }
 
+fn get_extra_pkg_config() -> Option<String> {
+    env::var(format!("CARGO_PKG_CONFIG_FFNVCODEC"))
+        .ok()
+        .map(|ffnvcodec_pc_path| {
+            env::var("PKG_CONFIG_PATH")
+                .as_ref()
+                .map(|p| {
+                    std::env::join_paths(&[ffnvcodec_pc_path.clone(), p.to_string()])
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string()
+                })
+                .unwrap_or_else(|_| ffnvcodec_pc_path.clone())
+        })
+}
+
 fn build() -> io::Result<()> {
     let source_dir = source();
 
@@ -193,6 +209,10 @@ fn build() -> io::Result<()> {
     let configure_path = source_dir.join("configure");
     assert!(configure_path.exists());
     let mut configure = Command::new(&configure_path);
+    if let Some(pc) = get_extra_pkg_config() {
+        println!("PKG_CONFIG_PATH:{pc}");
+        configure.env("PKG_CONFIG_PATH", pc);
+    }
     configure.current_dir(&source_dir);
 
     configure.arg(format!("--prefix={}", search().to_string_lossy()));
@@ -332,6 +352,7 @@ fn build() -> io::Result<()> {
     // other external libraries
     enable!(configure, "BUILD_LIB_DRM", "libdrm");
     enable!(configure, "BUILD_NVENC", "nvenc");
+    enable!(configure, "BUILD_FFNVCODEC", "ffnvcodec");
 
     // configure external protocols
     enable!(configure, "BUILD_LIB_SMBCLIENT", "libsmbclient");
