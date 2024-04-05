@@ -352,6 +352,7 @@ fn build() -> io::Result<()> {
     // other external libraries
     enable!(configure, "BUILD_LIB_DRM", "libdrm");
     enable!(configure, "BUILD_NVENC", "nvenc");
+    enable!(configure, "BUILD_NVDEC", "nvdec");
     enable!(configure, "BUILD_FFNVCODEC", "ffnvcodec");
 
     // configure external protocols
